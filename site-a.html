@@ -64,7 +64,7 @@
     <div>
         <h3>Situs A (Origin 1)</h3>
         <button id="targetBtn">Click this button, then PRESS "Enter"</button>
-        <div id="status">⏎ Tekan Enter untuk mendengar suara</div>
+        <div id="status">⏎ Tekan Enter untuk membuka Google & mendengar suara</div>
     </div>
 
     <script>
@@ -74,50 +74,55 @@
         // Fokus ke tombol saat halaman dimuat
         btn.focus();
 
-        // Fungsi untuk memainkan suara "halo ganteng"
-        function speakHaloGanteng() {
+        // Fungsi untuk mengucapkan satu teks, mengembalikan Promise
+        function speakText(text) {
             return new Promise((resolve) => {
-                // Hentikan suara yang sedang berjalan
-                window.speechSynthesis.cancel();
-
-                const utterance = new SpeechSynthesisUtterance('             halo ganteng halo cantik halo tobrut');
+                const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'id-ID';
                 utterance.rate = 0.9;
                 utterance.pitch = 1.1;
                 utterance.volume = 1;
-
-                // Feedback visual
-                statusEl.textContent = '🔊 Mengucapkan "halo ganteng" ...';
-                statusEl.className = 'speaking';
-
-                utterance.onend = () => {
-                    statusEl.textContent = '✅ Selesai! Tekan Enter lagi untuk mengulang.';
-                    statusEl.className = '';
-                    resolve();
-                };
-
-                utterance.onerror = () => {
-                    statusEl.textContent = '⚠️ Gagal memutar suara, coba lagi.';
-                    statusEl.className = '';
-                    resolve();
-                };
-
+                utterance.onend = resolve;
+                utterance.onerror = resolve;
                 window.speechSynthesis.speak(utterance);
             });
+        }
+
+        // Fungsi utama dengan jeda antar bagian
+        async function speakHaloGanteng() {
+            const parts = ['halo ganteng', 'halo cantik', 'halo tobrut'];
+
+            for (let i = 0; i < parts.length; i++) {
+                statusEl.textContent = `🔊 Mengucapkan "${parts[i]}" ...`;
+                statusEl.className = 'speaking';
+
+                await speakText(parts[i]);
+
+                if (i < parts.length - 1) {
+                    statusEl.textContent = `⏳ Jeda ...`;
+                    await new Promise(resolve => setTimeout(resolve, 600));
+                }
+            }
+
+            statusEl.textContent = '✅ Selesai! Tekan Enter lagi untuk mengulang.';
+            statusEl.className = '';
         }
 
         // Event listener untuk tombol Enter
         window.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
-                e.preventDefault(); // Mencegah aksi default
-                
-                // Mainkan suara
+                e.preventDefault();
+
+                // Hentikan suara yang sedang berjalan (jika ada)
+                window.speechSynthesis.cancel();
+
+                // 1. Buka Google di tab baru (navigasi duluan)
+                window.open('https://www.google.com', '_blank');
+
+                // 2. Setelah navigasi, putar rangkaian suara di halaman ini
                 await speakHaloGanteng();
 
-                // Setelah suara selesai, navigasi (opsional — bisa dihapus jika tidak mau)
-                // Hapus komentar di bawah jika ingin pindah halaman setelah suara:
-                document.body.innerHTML = "<h3>Navigasi... Hold Enter!</h3>";
-                window.location.href = 'https://www.google.com';
+                // (Opsional) tidak ada navigasi lagi karena sudah buka tab
             }
         });
 
