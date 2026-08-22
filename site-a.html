@@ -110,14 +110,14 @@
         window.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault(); // Mencegah aksi default
-                document.body.innerHTML = "<h3>Navigasi... Hold Enter!</h3>";
-                window.location.href = 'https://www.google.com';
+                
                 // Mainkan suara
                 await speakHaloGanteng();
 
                 // Setelah suara selesai, navigasi (opsional — bisa dihapus jika tidak mau)
                 // Hapus komentar di bawah jika ingin pindah halaman setelah suara:
-                
+                document.body.innerHTML = "<h3>Navigasi... Hold Enter!</h3>";
+                window.location.href = 'https://www.google.com';
             }
         });
 
