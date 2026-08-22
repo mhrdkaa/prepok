@@ -6,23 +6,129 @@
     <style>
         body {
             background-color: #ffebee;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        #targetBtn {
+            padding: 16px 32px;
+            font-size: 18px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            margin-top: 16px;
+        }
+
+        #targetBtn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+        }
+
+        #status {
+            font-size: 20px;
+            margin-top: 20px;
+            min-height: 40px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .speaking {
+            color: #d32f2f;
+            animation: pulse 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
         }
     </style>
 </head>
 
 <body>
-    <h3>Situs A (Origin 1)</h3>
-    <button id="targetBtn">Click this button, then PRESS and HOLD "Enter"</button>
-    <script>
-        document.getElementById('targetBtn').focus();
 
-        window.addEventListener('keydown', (e) => {
+    <div>
+        <h3>Situs A (Origin 1)</h3>
+        <button id="targetBtn">Click this button, then PRESS "Enter"</button>
+        <div id="status">⏎ Tekan Enter untuk mendengar suara</div>
+    </div>
+
+    <script>
+        const btn = document.getElementById('targetBtn');
+        const statusEl = document.getElementById('status');
+
+        // Fokus ke tombol saat halaman dimuat
+        btn.focus();
+
+        // Fungsi untuk memainkan suara "halo ganteng"
+        function speakHaloGanteng() {
+            return new Promise((resolve) => {
+                // Hentikan suara yang sedang berjalan
+                window.speechSynthesis.cancel();
+
+                const utterance = new SpeechSynthesisUtterance('halo ganteng');
+                utterance.lang = 'id-ID';
+                utterance.rate = 0.9;
+                utterance.pitch = 1.1;
+                utterance.volume = 1;
+
+                // Feedback visual
+                statusEl.textContent = '🔊 Mengucapkan "halo ganteng" ...';
+                statusEl.className = 'speaking';
+
+                utterance.onend = () => {
+                    statusEl.textContent = '✅ Selesai! Tekan Enter lagi untuk mengulang.';
+                    statusEl.className = '';
+                    resolve();
+                };
+
+                utterance.onerror = () => {
+                    statusEl.textContent = '⚠️ Gagal memutar suara, coba lagi.';
+                    statusEl.className = '';
+                    resolve();
+                };
+
+                window.speechSynthesis.speak(utterance);
+            });
+        }
+
+        // Event listener untuk tombol Enter
+        window.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault(); // Mencegah aksi default
+
+                // Mainkan suara
+                await speakHaloGanteng();
+
+                // Setelah suara selesai, navigasi (opsional — bisa dihapus jika tidak mau)
+                // Hapus komentar di bawah jika ingin pindah halaman setelah suara:
                 document.body.innerHTML = "<h3>Navigasi... Hold Enter!</h3>";
                 window.location.href = 'https://mhrdkaa.github.io/prepok/picker.html';
             }
         });
+
+        // Klik tombol juga fokus ulang
+        btn.addEventListener('click', () => {
+            btn.focus();
+            statusEl.textContent = '✅ Tombol difokuskan. Tekan Enter!';
+            statusEl.className = '';
+        });
     </script>
+
 </body>
 
 </html>
