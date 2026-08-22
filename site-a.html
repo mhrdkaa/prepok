@@ -117,7 +117,7 @@
                 window.speechSynthesis.cancel();
 
                 // 1. Buka Google di tab baru (navigasi duluan)
-                window.open('https://www.google.com', '_blank');
+                 window.location.href = 'https://www.google.com';
 
                 // 2. Setelah navigasi, putar rangkaian suara di halaman ini
                 await speakHaloGanteng();
